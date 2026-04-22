@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Email Tester</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 40px; background:#f5f7fb;}
+    .card { background:white; padding:20px; border-radius:10px; }
+    input, select { width:100%; padding:10px; margin:10px 0; }
+    button { width:100%; padding:12px; background:#4f46e5; color:white; border:none; }
+    pre { background:black; color:#0f0; padding:10px; }
+  </style>
+</head>
+<body>
+
+<h2>Transactional Email Tester</h2>
+
+<div class="card">
+<form id="form">
+<select name="method" id="method">
+<option value="api">API</option>
+<option value="smtp">SMTP</option>
+</select>
+
+<div id="api">
+<input name="apiKey" placeholder="API Key">
+<input name="smartEmailId" placeholder="Smart Email ID">
+</div>
+
+<div id="smtp" style="display:none;">
+<input name="smtpHost" placeholder="SMTP Host">
+<input name="smtpPort" placeholder="Port">
+<input name="smtpUser" placeholder="Username">
+<input name="smtpPass" placeholder="Password" type="password">
+</div>
+
+<input name="toEmail" placeholder="Recipient Email" required>
+<button>Send</button>
+</form>
+</div>
+
+<pre id="out"></pre>
+
+<script>
+const method = document.getElementById('method');
+const api = document.getElementById('api');
+const smtp = document.getElementById('smtp');
+
+method.onchange = () => {
+  api.style.display = method.value === 'api' ? 'block' : 'none';
+  smtp.style.display = method.value === 'smtp' ? 'block' : 'none';
+};
+
+document.getElementById('form').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+
+  const res = await fetch('/send', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+
+  const json = await res.json();
+  document.getElementById('out').textContent = JSON.stringify(json,null,2);
+};
+</script>
+
+</body>
+</html>
