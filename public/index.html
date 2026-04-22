@@ -1,57 +1,130 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Email Tester</title>
+  <title>Classic Transactional Tester</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 40px; background:#f5f7fb;}
-    .card { background:white; padding:20px; border-radius:10px; }
-    input, select { width:100%; padding:10px; margin:10px 0; }
-    button { width:100%; padding:12px; background:#4f46e5; color:white; border:none; }
-    pre { background:black; color:#0f0; padding:10px; }
+    body {
+      font-family: -apple-system, sans-serif;
+      background: #f5f7fb;
+      padding: 40px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1 { font-size: 24px; }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    textarea {
+      height: 120px;
+      font-family: monospace;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+
+    .error { color: #ff4d4d; }
   </style>
 </head>
 <body>
 
-<h2>Transactional Email Tester</h2>
+<h1>Classic Transactional Email Tester</h1>
 
 <div class="card">
 <form id="form">
+
+<label>Method</label>
 <select name="method" id="method">
-<option value="api">API</option>
-<option value="smtp">SMTP</option>
+  <option value="api">API</option>
+  <option value="smtp">SMTP</option>
 </select>
 
-<div id="api">
-<input name="apiKey" placeholder="API Key">
-<input name="smartEmailId" placeholder="Smart Email ID">
+<!-- API -->
+<div id="apiFields">
+  <label>API Key</label>
+  <input name="apiKey">
+
+  <label>Client ID</label>
+  <input name="clientId">
 </div>
 
-<div id="smtp" style="display:none;">
-<input name="smtpHost" placeholder="SMTP Host">
-<input name="smtpPort" placeholder="Port">
-<input name="smtpUser" placeholder="Username">
-<input name="smtpPass" placeholder="Password" type="password">
+<!-- SMTP -->
+<div id="smtpFields" style="display:none;">
+  <label>SMTP Username</label>
+  <input name="smtpUser" placeholder="Usually your CM username">
+
+  <label>SMTP Token</label>
+  <input name="smtpToken" type="password">
+
+  <label>SMTP Host</label>
+  <input name="smtpHost" placeholder="smtp.createsend.com">
+
+  <label>Port</label>
+  <input name="smtpPort" placeholder="587">
 </div>
 
-<input name="toEmail" placeholder="Recipient Email" required>
-<button>Send</button>
+<label>From Email</label>
+<input name="fromEmail" required>
+
+<label>Recipient Email</label>
+<input name="toEmail" required>
+
+<label>Subject</label>
+<input name="subject" required>
+
+<label>Content (HTML or Text)</label>
+<textarea name="content" required></textarea>
+
+<button type="submit">Send Test</button>
+
 </form>
 </div>
 
-<pre id="out"></pre>
+<pre id="output" style="display:none;"></pre>
 
 <script>
 const method = document.getElementById('method');
-const api = document.getElementById('api');
-const smtp = document.getElementById('smtp');
+const apiFields = document.getElementById('apiFields');
+const smtpFields = document.getElementById('smtpFields');
 
 method.onchange = () => {
-  api.style.display = method.value === 'api' ? 'block' : 'none';
-  smtp.style.display = method.value === 'smtp' ? 'block' : 'none';
+  apiFields.style.display = method.value === 'api' ? 'block' : 'none';
+  smtpFields.style.display = method.value === 'smtp' ? 'block' : 'none';
 };
 
 document.getElementById('form').onsubmit = async (e) => {
   e.preventDefault();
+
   const data = Object.fromEntries(new FormData(e.target));
 
   const res = await fetch('/send', {
@@ -61,7 +134,13 @@ document.getElementById('form').onsubmit = async (e) => {
   });
 
   const json = await res.json();
-  document.getElementById('out').textContent = JSON.stringify(json,null,2);
+
+  const output = document.getElementById('output');
+  output.style.display = 'block';
+  output.textContent = JSON.stringify(json, null, 2);
+
+  if (!json.success) output.classList.add('error');
+  else output.classList.remove('error');
 };
 </script>
 
