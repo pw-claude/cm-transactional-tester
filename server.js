@@ -12,48 +12,87 @@ app.post('/send', async (req, res) => {
   const {
     method,
     apiKey,
-    smartEmailId,
+    clientId,
+    fromEmail,
     toEmail,
+    subject,
+    content,
     smtpHost,
     smtpPort,
     smtpUser,
-    smtpPass
+    smtpToken
   } = req.body;
 
   try {
+    // =========================
+    // API: Classic Transactional
+    // =========================
     if (method === 'api') {
+      if (!apiKey || !clientId) {
+        throw new Error('API Key and Client ID are required');
+      }
+
       const response = await axios.post(
-        `https://api.createsend.com/api/v3.3/transactional/smartEmail/${smartEmailId}/send`,
+        `https://api.createsend.com/api/v3.3/transactional/classic/send`,
         {
+          ClientID: clientId,
           To: toEmail,
-          Data: {}
+          From: fromEmail,
+          Subject: subject,
+          Html: content,
+          Text: content
         },
         {
-          auth: { username: apiKey, password: 'x' }
+          auth: {
+            username: apiKey,
+            password: 'x'
+          }
         }
       );
 
-      return res.json({ success: true, response: response.data });
+      return res.json({
+        success: true,
+        type: 'API',
+        response: response.data
+      });
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: Number(smtpPort),
-      secure: false,
-      auth: { user: smtpUser, pass: smtpPass }
-    });
+    // =========================
+    // SMTP
+    // =========================
+    if (method === 'smtp') {
+      if (!smtpUser || !smtpToken) {
+        throw new Error('SMTP Username and Token required');
+      }
 
-    const info = await transporter.sendMail({
-      from: smtpUser,
-      to: toEmail,
-      subject: 'Test Email',
-      text: 'SMTP test email'
-    });
+      const transporter = nodemailer.createTransport({
+        host: smtpHost || 'smtp.createsend.com',
+        port: Number(smtpPort) || 587,
+        secure: false,
+        auth: {
+          user: smtpUser,
+          pass: smtpToken
+        }
+      });
 
-    res.json({ success: true, response: info });
+      const info = await transporter.sendMail({
+        from: fromEmail,
+        to: toEmail,
+        subject: subject,
+        html: content,
+        text: content
+      });
 
+      return res.json({
+        success: true,
+        type: 'SMTP',
+        response: info
+      });
+    }
+
+    throw new Error('Invalid method');
   } catch (err) {
-    res.json({
+    return res.json({
       success: false,
       error: err.response?.data || err.message
     });
